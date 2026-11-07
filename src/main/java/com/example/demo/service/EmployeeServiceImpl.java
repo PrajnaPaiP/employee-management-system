@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import com.example.demo.dto.EmployeeRequest;
+import com.example.demo.dto.EmployeeResponse;
 @Service
 public class EmployeeServiceImpl implements EmployeeService {
 
@@ -16,59 +18,101 @@ public class EmployeeServiceImpl implements EmployeeService {
     public EmployeeServiceImpl(EmployeeRepository employeeRepository) {
         this.employeeRepository = employeeRepository;
     }
+    private Employee mapToEntity(EmployeeRequest request) {
+        Employee employee = new Employee();
 
+        employee.setFirstName(request.getFirstName());
+        employee.setLastName(request.getLastName());
+        employee.setEmail(request.getEmail());
+        employee.setDepartment(request.getDepartment());
+        employee.setSalary(request.getSalary());
+
+        return employee;
+    }
+    // Convert Employee entity into EmployeeResponse
+    private EmployeeResponse mapToResponse(Employee employee) {
+        return new EmployeeResponse(
+                employee.getId(),
+                employee.getFirstName(),
+                employee.getLastName(),
+                employee.getEmail(),
+                employee.getDepartment(),
+                employee.getSalary()
+        );
+    }
     @Override
-    public Employee saveEmployee(Employee employee) {
-        return employeeRepository.save(employee);
+    public EmployeeResponse saveEmployee(EmployeeRequest request) {
+        Employee employee = mapToEntity(request);
+        return mapToResponse(employeeRepository.save(employee));
     }
 
     @Override
-    public List<Employee> getAllEmployees() {
-        return employeeRepository.findAll();
+    public List<EmployeeResponse> getAllEmployees() {
+        return employeeRepository.findAll()
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
     @Override
-    public Employee getEmployeeById(Long id) {
+    public EmployeeResponse  getEmployeeById(Long id) {
 
-        return employeeRepository.findById(id)
+        Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() ->
                         new EmployeeNotFoundException(
                                 "Employee not found with ID: " + id
                         ));
+        return mapToResponse(employee);
     }
 
     @Override
-    public Employee updateEmployee(Long id, Employee employee) {
-        Employee existingEmployee = getEmployeeById(id);
+    public EmployeeResponse updateEmployee(Long id, EmployeeRequest request) {
+        Employee employee = employeeRepository.findById(id)
+                .orElseThrow(() ->
+                        new EmployeeNotFoundException(
+                                "Employee not found with ID: " + id
+                        ));
 
-        existingEmployee.setFirstName(employee.getFirstName());
-        existingEmployee.setLastName(employee.getLastName());
-        existingEmployee.setEmail(employee.getEmail());
-        existingEmployee.setDepartment(employee.getDepartment());
-        existingEmployee.setSalary(employee.getSalary());
+        employee.setFirstName(request.getFirstName());
+        employee.setLastName(request.getLastName());
+        employee.setEmail(request.getEmail());
+        employee.setDepartment(request.getDepartment());
+        employee.setSalary(request.getSalary());
 
-        return employeeRepository.save(existingEmployee);
+        return mapToResponse(employeeRepository.save(employee));
     }
 
     @Override
     public void deleteEmployee(Long id) {
-        Employee employee = getEmployeeById(id);
+        Employee employee = employeeRepository.findById(id)
+                .orElseThrow(() ->
+                        new EmployeeNotFoundException(
+                                "Employee not found with ID: " + id
+                        ));
+
         employeeRepository.delete(employee);
     }
     @Override
-    public List<Employee> searchEmployeesByName(String name) {
+    public List<EmployeeResponse> searchEmployeesByName(String name) {
         return employeeRepository
                 .findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(
-                        name, name);
+                        name, name)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
     @Override
-    public List<Employee> searchEmployeesByDepartment(String department) {
+    public List<EmployeeResponse> searchEmployeesByDepartment(String department) {
         return employeeRepository
-                .findByDepartmentContainingIgnoreCase(department);
+                .findByDepartmentContainingIgnoreCase(department)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
     }
     @Override
-    public Page<Employee> getAllEmployees(Pageable pageable) {
-        return employeeRepository.findAll(pageable);
+    public Page<EmployeeResponse> getAllEmployees(Pageable pageable) {
+        return employeeRepository.findAll(pageable)
+                .map(this::mapToResponse);
     }
 }

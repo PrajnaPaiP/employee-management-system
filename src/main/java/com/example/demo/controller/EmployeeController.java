@@ -12,6 +12,8 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import com.example.demo.dto.EmployeeRequest;
+import com.example.demo.dto.EmployeeResponse;
 @RestController
 @RequestMapping("/api/employees")
 public class EmployeeController {
@@ -24,18 +26,17 @@ public class EmployeeController {
 
     // Create employee
     @PostMapping
-    public ResponseEntity<Employee> createEmployee(
-           @Valid @RequestBody Employee employee) {
+    public ResponseEntity<EmployeeResponse> createEmployee(
+           @Valid @RequestBody EmployeeRequest request) {
 
-        Employee savedEmployee =
-                employeeService.saveEmployee(employee);
-
-        return new ResponseEntity<>(savedEmployee, HttpStatus.CREATED);
+        return ResponseEntity.ok(
+                employeeService.saveEmployee(request)
+        );
     }
 
     // Get all employees
     @GetMapping
-    public ResponseEntity<List<Employee>> getAllEmployees() {
+    public ResponseEntity<List<EmployeeResponse>> getAllEmployees() {
 
         return ResponseEntity.ok(
                 employeeService.getAllEmployees());
@@ -43,7 +44,7 @@ public class EmployeeController {
 
     // Get employee by ID
     @GetMapping("/{id}")
-    public ResponseEntity<Employee> getEmployeeById(
+    public ResponseEntity<EmployeeResponse> getEmployeeById(
             @PathVariable Long id) {
 
         return ResponseEntity.ok(
@@ -52,12 +53,12 @@ public class EmployeeController {
 
     // Update employee
     @PutMapping("/{id}")
-    public ResponseEntity<Employee> updateEmployee(
+    public ResponseEntity<EmployeeResponse> updateEmployee(
             @PathVariable Long id,
-            @Valid @RequestBody Employee employee) {
+            @Valid @RequestBody EmployeeRequest request) {
 
         return ResponseEntity.ok(
-                employeeService.updateEmployee(id, employee));
+                employeeService.updateEmployee(id, request));
     }
 
     // Delete employee
@@ -67,11 +68,11 @@ public class EmployeeController {
 
         employeeService.deleteEmployee(id);
 
-        return ResponseEntity.ok("Employee deleted successfully");
+        return ResponseEntity.noContent().build();
     }
     // Search employees by name
     @GetMapping("/search/name")
-    public ResponseEntity<List<Employee>> searchByName(
+    public ResponseEntity<List<EmployeeResponse>> searchByName(
             @RequestParam String name) {
 
         return ResponseEntity.ok(
@@ -80,7 +81,7 @@ public class EmployeeController {
 
     // Search employees by department
     @GetMapping("/search/department")
-    public ResponseEntity<List<Employee>> searchByDepartment(
+    public ResponseEntity<List<EmployeeResponse>> searchByDepartment(
             @RequestParam String department) {
 
         return ResponseEntity.ok(
@@ -88,7 +89,7 @@ public class EmployeeController {
     }
 
     @GetMapping("/page")
-    public ResponseEntity<Page<Employee>> getEmployeesWithPagination(
+    public ResponseEntity<Page<EmployeeResponse>> getEmployeesWithPagination(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(defaultValue = "id") String sortBy,
