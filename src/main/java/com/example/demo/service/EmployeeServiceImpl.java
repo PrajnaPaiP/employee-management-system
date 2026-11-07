@@ -4,12 +4,12 @@ import com.example.demo.exception.EmployeeNotFoundException;
 import com.example.demo.entity.Employee;
 import com.example.demo.repository.EmployeeRepository;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import com.example.demo.dto.EmployeeRequest;
 import com.example.demo.dto.EmployeeResponse;
+import com.example.demo.exception.DuplicateEmailException;
 @Service
 public class EmployeeServiceImpl implements EmployeeService {
 
@@ -42,6 +42,11 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
     @Override
     public EmployeeResponse saveEmployee(EmployeeRequest request) {
+        if (employeeRepository.existsByEmail(request.getEmail())) {
+            throw new DuplicateEmailException(
+                    "Email already exists: " + request.getEmail()
+            );
+        }
         Employee employee = mapToEntity(request);
         return mapToResponse(employeeRepository.save(employee));
     }
@@ -72,7 +77,11 @@ public class EmployeeServiceImpl implements EmployeeService {
                         new EmployeeNotFoundException(
                                 "Employee not found with ID: " + id
                         ));
-
+        if (employeeRepository.existsByEmailAndIdNot(request.getEmail(), id)) {
+            throw new DuplicateEmailException(
+                    "Email already exists: " + request.getEmail()
+            );
+        }
         employee.setFirstName(request.getFirstName());
         employee.setLastName(request.getLastName());
         employee.setEmail(request.getEmail());
